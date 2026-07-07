@@ -280,7 +280,7 @@
       <button class="tab-btn active" onclick="switchTab('orders', this)">Orders (fact_orders)</button>
       <button class="tab-btn" onclick="switchTab('customers', this)">Customers (dim_customer)</button>
       <button class="tab-btn" onclick="switchTab('s3', this)">Local S3 Data Lake</button>
-      <button class="tab-btn" onclick="switchTab('quarantine', this)">Quarantine Zone (3 Bad Records)</button>
+      <button class="tab-btn" onclick="switchTab('quarantine', this)">Quarantine Zone (7 Bad Records)</button>
     </div>
 
     <!-- Orders -->
@@ -313,18 +313,18 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Customer ID</th><th>Name</th><th>Email</th><th>Orders</th><th>Lifetime Value</th>
+            <th>Customer ID</th><th>Name</th><th>Segment</th><th>Orders</th><th>Lifetime Value</th>
           </tr></thead>
           <tbody>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-001</td><td style="font-weight:600">Alice Sharma</td><td style="color:var(--text-muted)">alice.sharma@example.com</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 76.00</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-002</td><td style="font-weight:600">Ravi Menon</td><td style="color:var(--text-muted)">ravi.menon@example.com</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 53.99</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-003</td><td style="font-weight:600">Priya Nair</td><td style="color:var(--text-muted)">priya.nair@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 77.50</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-008</td><td style="font-weight:600">Kiran Desai</td><td style="color:var(--text-muted)">kiran.desai@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 35.96</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-101</td><td style="font-weight:600">John Doe</td><td style="color:var(--text-muted)">john.doe@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-102</td><td style="font-weight:600">Jane Smith</td><td style="color:var(--text-muted)">jane.smith@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 39.98</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-103</td><td style="font-weight:600">Bob Johnson</td><td style="color:var(--text-muted)">bob.johnson@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 59.50</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-106</td><td style="font-weight:600">Sara Khan</td><td style="color:var(--text-muted)">sara.khan@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 9.99</td></tr>
-            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-107</td><td style="font-weight:600">Mike Lee</td><td style="color:var(--text-muted)">mike.lee@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-001</td><td style="font-weight:600">Customer 001</td><td style="color:var(--text-muted)">Standard</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 76.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-002</td><td style="font-weight:600">Customer 002</td><td style="color:var(--text-muted)">Standard</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 53.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-003</td><td style="font-weight:600">Customer 003</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 77.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-008</td><td style="font-weight:600">Customer 008</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 35.96</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-101</td><td style="font-weight:600">Customer 101</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-102</td><td style="font-weight:600">Customer 102</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 39.98</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-103</td><td style="font-weight:600">Customer 103</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 59.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-106</td><td style="font-weight:600">Customer 106</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 9.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-107</td><td style="font-weight:600">Customer 107</td><td style="color:var(--text-muted)">Standard</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
           </tbody>
         </table>
       </div>
@@ -462,7 +462,7 @@
 const channelData = {
   labels: ["ECOMMERCE", "POS", "MARKETPLACE"],
   datasets: [{
-    data: [339.48, 297.45, 9.99],
+    data: [339.48, 243.45, 9.99],
     backgroundColor: ["rgba(139,92,246,.75)", "rgba(59,130,246,.75)", "rgba(245,158,11,.75)"],
     borderColor: ["#8b5cf6", "#3b82f6", "#f59e0b"],
     borderWidth: 1.5
@@ -470,9 +470,9 @@ const channelData = {
 };
 
 const skuData = {
-  labels: ["PROD-201", "PROD-101", "PROD-103", "PROD-203", "PROD-202", "PROD-102", "PROD-204"],
+  labels: ["PROD-201", "PROD-101", "PROD-103", "PROD-203", "PROD-102", "PROD-202", "PROD-204"],
   datasets: [{
-    data: [240.00, 108.50, 90.00, 59.50, 48.97, 44.95, 9.99],
+    data: [240.00, 108.50, 90.00, 59.50, 44.95, 39.98, 9.99],
     backgroundColor: "rgba(59,130,246,.65)",
     borderColor: "#3b82f6", borderWidth: 1, borderRadius: 4
   }]

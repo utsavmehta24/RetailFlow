@@ -5,11 +5,13 @@ and runs the full ETL pipeline — all from a single "Start Pipeline" button.
 """
 import json
 import os
+import re
 import socket
 import subprocess
 import threading
 import time
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -115,94 +117,150 @@ def _ensure_docker_daemon_running():
     return False
 
 
-def _boot_infrastructure():
-    """Start Docker containers, wait for health, run Terraform, apply schema."""
+def _containers_already_running():
+    """Return True if both LocalStack and Postgres containers are already up and healthy."""
+    ls_ok = _port_open("127.0.0.1", 4566)
+    pg_ok = _port_open("127.0.0.1", 5433)
+    if ls_ok and pg_ok:
+        try:
+            conn = psycopg2.connect(**DB_CONFIG, connect_timeout=3)
+            conn.close()
+            return True
+        except Exception:
+            pass
+    return False
 
+
+def _s3_buckets_exist():
+    """Return True if both S3 buckets already exist in LocalStack."""
+    try:
+        s3 = get_s3()
+        s3.head_bucket(Bucket=RAW_BUCKET)
+        s3.head_bucket(Bucket=CURATED_BUCKET)
+        return True
+    except Exception:
+        return False
+
+
+def _schema_tables_exist():
+    """Return True if the warehouse tables are already present in Postgres."""
+    try:
+        conn = psycopg2.connect(**DB_CONFIG, connect_timeout=3)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name IN ('fact_orders','dim_customer','dim_product','dim_date')
+        """)
+        count = cur.fetchone()[0]
+        conn.close()
+        return count == 4
+    except Exception:
+        return False
+
+
+def _boot_infrastructure():
+    """Start Docker containers, wait for health, run Terraform, apply schema.
+    Skips each sub-step intelligently if it's already done to save time on re-runs.
+    """
     with _pipeline_lock:
         pipeline_state["steps"]["infra"]["status"] = "running"
         pipeline_state["steps"]["infra"]["started"] = datetime.now().isoformat()
         pipeline_state["current_step"] = "infra"
 
-    # 0. Ensure Docker Daemon is responsive
+    # ── 0. Docker daemon check ────────────────────────────────────────────────
     _ensure_docker_daemon_running()
-
     if _stop_event.is_set():
         return False
 
-    # 1. Docker compose up
-    _log("Starting Docker containers (LocalStack S3 + PostgreSQL)...")
-    try:
-        result = subprocess.run(
-            ["docker", "compose", "up", "-d"],
-            cwd=PROJECT_ROOT,
-            capture_output=True, text=True, timeout=120
-        )
-        for line in (result.stdout + result.stderr).strip().split("\n"):
-            if line.strip():
-                _log(f"  docker: {line.strip()}")
-        if result.returncode != 0:
-            raise RuntimeError(f"docker compose up failed: {result.stderr}")
-    except FileNotFoundError:
-        _log("ERROR: 'docker' command not found. Is Docker Desktop installed?")
-        raise RuntimeError("Docker not found")
-
-    if _stop_event.is_set():
-        return False
-
-    # 2. Wait for LocalStack S3 (port 4566)
-    _log("Waiting for LocalStack S3 to become healthy...")
-    for i in range(45):
-        if _stop_event.is_set():
-            return False
-        if _port_open("127.0.0.1", 4566):
-            _log("LocalStack S3 is ready!")
-            break
-        time.sleep(2)
-        if i % 3 == 2:
-            _log(f"  Still waiting for LocalStack... ({i+1}s)")
+    # ── 1. Docker compose up — skip if containers are already healthy ─────────
+    if _containers_already_running():
+        _log("Containers already running — skipping docker compose up.")
     else:
-        raise RuntimeError("LocalStack did not start in time")
+        _log("Starting Docker containers (LocalStack S3 + PostgreSQL)...")
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "up", "-d"],
+                cwd=PROJECT_ROOT,
+                capture_output=True, text=True, timeout=120
+            )
+            for line in (result.stdout + result.stderr).strip().split("\n"):
+                if line.strip():
+                    _log(f"  docker: {line.strip()}")
+            if result.returncode != 0:
+                raise RuntimeError(f"docker compose up failed: {result.stderr}")
+        except FileNotFoundError:
+            _log("ERROR: 'docker' command not found. Is Docker Desktop installed?")
+            raise RuntimeError("Docker not found")
 
-    # 3. Wait for PostgreSQL (port 5433)
-    _log("Waiting for PostgreSQL to become healthy...")
-    for i in range(30):
         if _stop_event.is_set():
             return False
-        if _port_open("127.0.0.1", 5433):
-            # Also verify Postgres is ready to accept queries
-            time.sleep(1)
-            try:
-                conn = psycopg2.connect(**DB_CONFIG)
-                conn.close()
-                _log("PostgreSQL is ready and accepting connections!")
+
+        # Wait for LocalStack S3 (port 4566)
+        _log("Waiting for LocalStack S3 to become healthy...")
+        for i in range(45):
+            if _stop_event.is_set():
+                return False
+            if _port_open("127.0.0.1", 4566):
+                _log("LocalStack S3 is ready!")
                 break
-            except:
-                pass
-        time.sleep(2)
-        if i % 3 == 2:
-            _log(f"  Still waiting for Postgres... ({i+1}s)")
-    else:
-        raise RuntimeError("PostgreSQL did not start in time")
+            time.sleep(2)
+            if i % 3 == 2:
+                _log(f"  Still waiting for LocalStack... ({(i+1)*2}s)")
+        else:
+            raise RuntimeError("LocalStack did not start in time")
+
+        # Wait for PostgreSQL (port 5433)
+        _log("Waiting for PostgreSQL to become healthy...")
+        for i in range(30):
+            if _stop_event.is_set():
+                return False
+            if _port_open("127.0.0.1", 5433):
+                time.sleep(1)
+                try:
+                    conn = psycopg2.connect(**DB_CONFIG)
+                    conn.close()
+                    _log("PostgreSQL is ready and accepting connections!")
+                    break
+                except Exception:
+                    pass
+            time.sleep(2)
+            if i % 3 == 2:
+                _log(f"  Still waiting for Postgres... ({(i+1)*2}s)")
+        else:
+            raise RuntimeError("PostgreSQL did not start in time")
 
     if _stop_event.is_set():
         return False
 
-    # 4. Run Terraform to provision S3 buckets
-    _log("Provisioning S3 buckets via Terraform...")
+    # ── 2. Terraform — skip init if .terraform dir already exists ─────────────
     tf_path = os.path.join(PROJECT_ROOT, "bin", "terraform.exe")
     infra_dir = os.path.join(PROJECT_ROOT, "infra")
 
-    if os.path.exists(tf_path):
-        # terraform init
-        r = subprocess.run([tf_path, "init"], cwd=infra_dir, capture_output=True, text=True, timeout=120)
-        for line in r.stdout.strip().split("\n"):
-            if line.strip() and ("Initializing" in line or "installed" in line or "configured" in line):
-                _log(f"  terraform: {line.strip()}")
+    if _s3_buckets_exist():
+        _log("S3 buckets already exist — skipping Terraform provisioning.")
+    elif os.path.exists(tf_path):
+        _log("Provisioning S3 buckets via Terraform...")
+        tf_initialized = os.path.isdir(os.path.join(infra_dir, ".terraform"))
 
-        # terraform apply
-        r = subprocess.run([tf_path, "apply", "-auto-approve"], cwd=infra_dir, capture_output=True, text=True, timeout=180)
+        if not tf_initialized:
+            _log("  Running terraform init...")
+            r = subprocess.run(
+                [tf_path, "init", "-input=false"],
+                cwd=infra_dir, capture_output=True, text=True, timeout=120
+            )
+            for line in r.stdout.strip().split("\n"):
+                if line.strip() and any(k in line for k in ("Initializing", "installed", "configured")):
+                    _log(f"  terraform: {line.strip()}")
+        else:
+            _log("  Terraform already initialized — skipping init.")
+
+        r = subprocess.run(
+            [tf_path, "apply", "-auto-approve", "-input=false"],
+            cwd=infra_dir, capture_output=True, text=True, timeout=120
+        )
         for line in r.stdout.strip().split("\n"):
-            if line.strip() and ("Apply" in line or "created" in line or "complete" in line):
+            if line.strip() and any(k in line for k in ("Apply", "created", "complete", "No changes")):
                 _log(f"  terraform: {line.strip()}")
         if r.returncode != 0:
             _log(f"  terraform stderr: {r.stderr.strip()}")
@@ -214,22 +272,25 @@ def _boot_infrastructure():
     if _stop_event.is_set():
         return False
 
-    # 5. Apply database schema DDL
-    _log("Applying warehouse schema (dim_customer, dim_product, dim_date, fact_orders)...")
-    schema_path = os.path.join(PROJECT_ROOT, "warehouse", "schema.sql")
-    if os.path.exists(schema_path):
-        try:
-            conn = psycopg2.connect(**DB_CONFIG)
-            cur = conn.cursor()
-            with open(schema_path, "r") as f:
-                cur.execute(f.read())
-            conn.commit()
-            conn.close()
-            _log("Database schema applied successfully!")
-        except Exception as e:
-            _log(f"  Schema warning: {e}")
+    # ── 3. Schema DDL — skip if all 4 tables already present ─────────────────
+    if _schema_tables_exist():
+        _log("Warehouse schema already exists — skipping DDL.")
     else:
-        _log("  schema.sql not found, skipping")
+        _log("Applying warehouse schema (dim_customer, dim_product, dim_date, fact_orders)...")
+        schema_path = os.path.join(PROJECT_ROOT, "warehouse", "schema.sql")
+        if os.path.exists(schema_path):
+            try:
+                conn = psycopg2.connect(**DB_CONFIG)
+                cur = conn.cursor()
+                with open(schema_path, "r") as f:
+                    cur.execute(f.read())
+                conn.commit()
+                conn.close()
+                _log("Database schema applied successfully!")
+            except Exception as e:
+                _log(f"  Schema warning: {e}")
+        else:
+            _log("  schema.sql not found, skipping")
 
     with _pipeline_lock:
         pipeline_state["steps"]["infra"]["status"] = "completed"
@@ -570,6 +631,81 @@ def pipeline_health():
         s3 = get_s3(); s3.head_bucket(Bucket=CURATED_BUCKET); health["curated_bucket"] = True
     except: pass
     return jsonify({"success": True, "data": health})
+
+
+@app.route("/api/upload_data", methods=["POST"])
+def api_upload_data():
+    """
+    Accept a user-uploaded CSV or JSON file and save it into data/sample_orders/,
+    replacing the existing sample file of the same type.
+    Accepted: .csv  → replaces pos_export_<date>.csv
+              .json → replaces ecommerce_export_<date>.json
+    """
+    ALLOWED_EXTENSIONS = {".csv", ".json"}
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "No file part in request"}), 400
+
+    f = request.files["file"]
+    if not f or not f.filename:
+        return jsonify({"success": False, "error": "Empty filename"}), 400
+
+    filename = secure_filename(f.filename)
+    ext = os.path.splitext(filename)[1].lower()
+
+    if ext not in ALLOWED_EXTENSIONS:
+        return jsonify({"success": False, "error": f"Only .csv and .json files are accepted, got '{ext}'"}), 400
+
+    # Validate size (max 10 MB)
+    f.seek(0, 2)
+    size = f.tell()
+    f.seek(0)
+    if size > 10 * 1024 * 1024:
+        return jsonify({"success": False, "error": "File too large (max 10 MB)"}), 400
+
+    sample_dir = os.path.join(PROJECT_ROOT, "data", "sample_orders")
+    os.makedirs(sample_dir, exist_ok=True)
+
+    # Determine canonical target filename from extension
+    target_date = request.form.get("target_date", "2026-07-01")
+    # Sanitise date: allow only YYYY-MM-DD
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", target_date):
+        target_date = "2026-07-01"
+
+    if ext == ".csv":
+        dest_filename = f"pos_export_{target_date}.csv"
+    else:
+        dest_filename = f"ecommerce_export_{target_date}.json"
+
+    dest_path = os.path.join(sample_dir, dest_filename)
+    f.save(dest_path)
+
+    return jsonify({
+        "success": True,
+        "message": f"Uploaded as '{dest_filename}' — click Start Pipeline to process it.",
+        "filename": dest_filename,
+        "size": size,
+        "type": "csv" if ext == ".csv" else "json",
+    })
+
+
+@app.route("/api/list_data_files")
+def api_list_data_files():
+    """Return the CSV and JSON files currently in data/sample_orders/."""
+    sample_dir = os.path.join(PROJECT_ROOT, "data", "sample_orders")
+    files = []
+    if os.path.isdir(sample_dir):
+        for fname in sorted(os.listdir(sample_dir)):
+            ext = os.path.splitext(fname)[1].lower()
+            if ext in (".csv", ".json"):
+                fpath = os.path.join(sample_dir, fname)
+                files.append({
+                    "filename": fname,
+                    "size": os.path.getsize(fpath),
+                    "type": ext.lstrip("."),
+                    "modified": datetime.fromtimestamp(os.path.getmtime(fpath)).strftime("%Y-%m-%d %H:%M"),
+                })
+    return jsonify({"success": True, "data": files})
 
 
 if __name__ == "__main__":

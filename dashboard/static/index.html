@@ -367,6 +367,25 @@
     }
     .upload-feedback.ok { display: block; background: rgba(16,185,129,0.08); color: var(--green); }
     .upload-feedback.err { display: block; background: rgba(239,68,68,0.08); color: var(--red); }
+    
+    /* Upload Area */
+    .upload-area {
+      display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem;
+      background: rgba(255,255,255,0.02); border: 1.5px dashed var(--border);
+      border-radius: 10px; cursor: pointer; transition: all 0.25s;
+    }
+    .upload-area:hover {
+      background: rgba(37,99,235,0.05); border-color: var(--accent);
+    }
+    .upload-icon {
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .upload-text {
+      font-size: 0.72rem; line-height: 1.4;
+    }
+    .upload-text strong {
+      color: var(--accent); font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -431,26 +450,31 @@
     <div class="card-sidebar">
       <h2>📂 Data Sources</h2>
       <div class="info-tip">
-        <div class="info-tip-header">📦 Preloaded Sample Files</div>
-        The pipeline processes these real-world format files automatically when you click <strong>Start Pipeline</strong>:
-        <div class="data-files-list">
+        <div class="info-tip-header">📦 Sample Files</div>
+        The pipeline processes these files when you click <strong>Start Pipeline</strong>:
+        <div class="data-files-list" id="data-files-list">
           <div class="data-file-item">
-            <span class="data-file-icon">📄</span>
+            <span class="data-file-icon">⏳</span>
             <div>
-              <div class="data-file-name">pos_export_2026-07-01.csv</div>
-              <div class="data-file-desc">POS terminal export — 11 rows, includes 3 intentional errors</div>
-            </div>
-          </div>
-          <div class="data-file-item">
-            <span class="data-file-icon">📋</span>
-            <div>
-              <div class="data-file-name">ecommerce_export_2026-07-01.json</div>
-              <div class="data-file-desc">E-Commerce storefront — 8 orders, includes invalid entries</div>
+              <div class="data-file-name">Loading files...</div>
             </div>
           </div>
         </div>
-        <div class="tooltip-box">
-          <strong>💡 Pro Tip:</strong> You can drop your own CSV/JSON files into <code style="color:#63b3ed">data/sample_orders/</code> and re-run the pipeline. The dashboard will reflect entirely different data — this is a real, working ETL system, not a simulation.
+        
+        <!-- Upload UI -->
+        <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--accent);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.3rem;">
+            <span>📤</span> Upload Your Own Data
+          </div>
+          <label for="file-upload-input" class="upload-area">
+            <input type="file" id="file-upload-input" accept=".csv,.json" style="display:none" onchange="handleFileUpload(event)">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+              <strong>Click to browse</strong> or drag & drop
+              <div style="font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem;">CSV or JSON · Max 10 MB</div>
+            </div>
+          </label>
+          <div id="upload-feedback" class="upload-feedback"></div>
         </div>
       </div>
     </div>
@@ -1125,6 +1149,80 @@ function switchTab(tabId) {
   document.getElementById(`tab-${tabId}`).style.display = "block";
 }
 
+// ── File Upload Handler ───────────────────────────────────────────────────
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const feedback = document.getElementById("upload-feedback");
+  feedback.className = "upload-feedback";
+  feedback.textContent = "Uploading...";
+  feedback.style.display = "block";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("target_date", document.getElementById("target-date").value);
+
+  try {
+    const res = await fetch(`${API}/api/upload_data`, {
+      method: "POST",
+      body: formData
+    }).then(r => r.json());
+
+    if (res.success) {
+      feedback.className = "upload-feedback ok";
+      feedback.textContent = `✓ ${res.message}`;
+      await loadDataFiles(); // Refresh file list
+    } else {
+      feedback.className = "upload-feedback err";
+      feedback.textContent = `✗ ${res.error || "Upload failed"}`;
+    }
+  } catch (err) {
+    feedback.className = "upload-feedback err";
+    feedback.textContent = `✗ Upload error: ${err.message}`;
+  }
+
+  event.target.value = ""; // Clear input
+  setTimeout(() => { feedback.style.display = "none"; }, 5000);
+}
+
+// ── Load Data Files List ──────────────────────────────────────────────────
+async function loadDataFiles() {
+  const container = document.getElementById("data-files-list");
+  try {
+    const res = await fetch(`${API}/api/list_data_files`).then(r => r.json());
+    if (res.success && res.data && res.data.length > 0) {
+      container.innerHTML = res.data.map(f => {
+        const icon = f.type === "csv" ? "📄" : "📋";
+        const sizeKB = (f.size / 1024).toFixed(1);
+        return `
+          <div class="data-file-item">
+            <span class="data-file-icon">${icon}</span>
+            <div style="flex:1;min-width:0;">
+              <div class="data-file-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.filename}</div>
+              <div class="data-file-desc">${sizeKB} KB · Modified ${f.modified}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    } else {
+      container.innerHTML = `
+        <div class="data-file-item">
+          <span class="data-file-icon">📭</span>
+          <div><div class="data-file-name" style="color:var(--text-muted)">No files found</div></div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    container.innerHTML = `
+      <div class="data-file-item">
+        <span class="data-file-icon">⚠️</span>
+        <div><div class="data-file-name" style="color:var(--red)">Error loading files</div></div>
+      </div>
+    `;
+  }
+}
+
 // Reset Database API
 document.getElementById("btn-reset").onclick = async () => {
   if (confirm("Clear all loaded PostgreSQL warehouse tables, local LocalStack S3 data lake files, and reset dashboard state?")) {
@@ -1147,6 +1245,9 @@ document.getElementById("btn-reset").onclick = async () => {
 
 // ── Boot — check if pipeline is running, otherwise sync dashboard ──
 (async () => {
+  // Load data files list
+  await loadDataFiles();
+  
   const res = await fetch(`${API}/api/pipeline_status`).then(r => r.json()).catch(() => ({}));
   const data = res ? res.data : null;
   
