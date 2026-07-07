@@ -919,7 +919,7 @@ Special thanks to the data engineering community for sharing knowledge and best 
 
 - **Issues**: [GitHub Issues](https://github.com/utsavmehta24/RetailFlow/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/utsavmehta24/RetailFlow/discussions)
-- **Email**: your.email@example.com
+- **Email**: utsavmehta24072003@gmail.com
 - **Twitter**: [@Lucid24by7_io
 ](https://x.com/Lucid24by7_io)
 
