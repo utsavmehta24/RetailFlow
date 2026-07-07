@@ -1,0 +1,74 @@
+[
+    {
+        "order_id": "ECOMM-2001",
+        "customer_id": "CUST-101",
+        "order_date": "2026-07-01",
+        "sku": "PROD-201",
+        "quantity": 1,
+        "unit_price": 120.00,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2002",
+        "customer_id": "CUST-102",
+        "order_date": "2026-07-01",
+        "sku": "PROD-202",
+        "quantity": 2,
+        "unit_price": 19.99,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2003",
+        "customer_id": "CUST-103",
+        "order_date": "2026-07-01",
+        "sku": "PROD-203",
+        "quantity": 1,
+        "unit_price": 59.50,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2004",
+        "customer_id": "CUST-104",
+        "order_date": "2026-07-01",
+        "sku": "PROD-201",
+        "quantity": 0,
+        "unit_price": 120.00,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2005",
+        "customer_id": "CUST-105",
+        "order_date": "2026-07-01",
+        "sku": "PROD-202",
+        "quantity": 3,
+        "unit_price": -1.99,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2006",
+        "customer_id": "",
+        "order_date": "2026-07-01",
+        "sku": "PROD-203",
+        "quantity": 1,
+        "unit_price": 59.50,
+        "channel": "ecommerce"
+    },
+    {
+        "order_id": "ECOMM-2007",
+        "customer_id": "CUST-106",
+        "order_date": "2026-07-01",
+        "sku": "PROD-204",
+        "quantity": 1,
+        "unit_price": 9.99,
+        "channel": "marketplace"
+    },
+    {
+        "order_id": "ECOMM-2008",
+        "customer_id": "CUST-107",
+        "order_date": "2026-07-01",
+        "sku": "PROD-201",
+        "quantity": 1,
+        "unit_price": 120.00,
+        "channel": "ecommerce"
+    }
+]

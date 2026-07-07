@@ -1,0 +1,82 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pycache
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Terraform ─────────────────────────────────────────────────────────────────
+# Provider plugin cache (auto-downloaded by `terraform init` — do NOT commit)
+infra/.terraform/
+infra/.terraform.lock.hcl
+
+# Terraform state — contains sensitive resource details; use remote backend in prod
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Docker volumes are stored outside the project tree — nothing to ignore here
+
+# ── PySpark / Java ────────────────────────────────────────────────────────────
+# Spark event logs and derby metastore created by local PySpark runs
+spark-warehouse/
+metastore_db/
+derby.log
+*.log
+
+# ── Project-specific generated artifacts ─────────────────────────────────────
+# Hadoop Windows binaries (auto-downloaded by run_pipeline.ps1 on first run)
+hadoop/bin/winutils.exe
+hadoop/bin/hadoop.dll
+
+# Terraform CLI binary (auto-downloaded by setup.ps1 on first run)
+bin/terraform.exe
+bin/terraform.zip
+
+# Screenshot helper (temporary utility script)
+images/take_screenshots.ps1
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# VS Code / Kiro
+.vscode/
+.kiro/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+
+# ── Secrets / credentials ─────────────────────────────────────────────────────
+# Never commit real credentials — this project uses mock values for local dev
+*.pem
+*.key
+.aws/
+secrets.json
+credentials.json

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: retailflow-localstack
+    image: localstack/localstack:3.8.0
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "retailflow-localstack-data:/var/lib/localstack"
+
+  postgres:
+    container_name: retailflow-postgres
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=retailflow_dw
+    volumes:
+      - retailflow-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  retailflow-localstack-data:
+  retailflow-postgres-data:

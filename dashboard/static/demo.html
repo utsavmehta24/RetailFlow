@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RetailFlow — Static Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #050a15; --surface: #0a1122; --surface-card: #0f1a30;
+      --border: rgba(59,130,246,0.15); --accent: #2563eb;
+      --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --text-muted: #64748b;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Inter',sans-serif; background:var(--bg); color:var(--text);
+      min-height:100vh; padding-bottom:5rem;
+      background-image: radial-gradient(circle at 10% 20%,rgba(37,99,235,.08) 0%,transparent 40%),
+                        radial-gradient(circle at 90% 80%,rgba(16,185,129,.05) 0%,transparent 40%);
+    }
+    /* ── Toggle Banner ── */
+    .demo-banner {
+      background: linear-gradient(90deg, rgba(37,99,235,.15), rgba(16,185,129,.1));
+      border-bottom: 1px solid rgba(37,99,235,.3);
+      padding: .75rem 2rem; display:flex; align-items:center;
+      justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    }
+    .demo-banner-left { display:flex; align-items:center; gap:.75rem; }
+    .demo-dot { width:10px; height:10px; border-radius:50%; background:#f59e0b;
+      box-shadow: 0 0 8px #f59e0b; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .demo-label { font-size:.8rem; font-weight:700; color:#fbbf24; }
+    .demo-label span { color:var(--text-muted); font-weight:400; margin-left:.4rem; }
+    .demo-toggle-btn {
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      color:#fff; border:none; padding:.55rem 1.2rem; border-radius:8px;
+      font-weight:700; font-size:.8rem; cursor:pointer;
+      box-shadow: 0 0 15px rgba(37,99,235,.35); transition: transform .15s;
+    }
+    .demo-toggle-btn:hover { transform:scale(1.03); }
+    /* ── Header ── */
+    header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(10,17,34,.85);
+      backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:1000;
+    }
+    .logo-container { display:flex; align-items:center; gap:.75rem; }
+    .logo-badge {
+      width:40px; height:40px;
+      background:linear-gradient(135deg,var(--accent),var(--green));
+      border-radius:12px; display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:1.2rem; box-shadow:0 0 20px rgba(37,99,235,.25);
+    }
+    .logo-text h1 { font-size:1.15rem; font-weight:800; letter-spacing:-.02em; }
+    .logo-text h1 span { color:var(--green); }
+    .logo-text p { font-size:.65rem; color:var(--text-muted); font-weight:500; }
+    .demo-chip {
+      background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3);
+      color:#fbbf24; font-size:.7rem; font-weight:700; padding:.3rem .7rem;
+      border-radius:6px; text-transform:uppercase; letter-spacing:.05em;
+    }
+    /* ── Layout ── */
+    .main-wrap { max-width:1400px; margin:1.5rem auto 0; padding:0 1.5rem;
+      display:flex; flex-direction:column; gap:1.5rem; }
+    /* ── KPI Grid ── */
+    .kpi-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:.75rem; }
+    .kpi-box {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; padding:1rem .85rem; position:relative;
+    }
+    .kpi-box::after { content:''; position:absolute; top:0; left:0; width:100%;
+      height:2px; background:var(--kpi-color, var(--accent)); }
+    .kpi-val { font-size:1.5rem; font-weight:800; letter-spacing:-.02em; margin-top:.2rem; }
+    .kpi-lbl { font-size:.68rem; color:var(--text-muted); font-weight:600;
+      text-transform:uppercase; letter-spacing:.05em; }
+    /* ── Pipeline Status Bar ── */
+    .pipeline-bar {
+      background:var(--surface); border:1px solid rgba(16,185,129,.25);
+      border-radius:16px; padding:1.25rem 1.5rem;
+    }
+    .pipeline-bar-hdr { display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:1.1rem; }
+    .pipeline-bar-title { font-size:.85rem; font-weight:700; text-transform:uppercase;
+      color:var(--text-muted); }
+    .pipeline-complete-chip { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3);
+      color:var(--green); font-size:.75rem; font-weight:700; padding:.3rem .8rem;
+      border-radius:6px; display:flex; align-items:center; gap:.4rem; }
+    .steps-row { display:flex; align-items:center; gap:.75rem; }
+    .step-card {
+      flex:1; background:rgba(16,185,129,.04); border:1px solid rgba(16,185,129,.25);
+      border-radius:14px; padding:.9rem .75rem; display:flex; align-items:center;
+      gap:.6rem; box-shadow: 0 0 10px rgba(16,185,129,.08);
+    }
+    .step-badge { width:34px; height:34px; border-radius:10px; display:flex;
+      align-items:center; justify-content:center; font-size:1rem;
+      background:rgba(16,185,129,.15); border:2px solid rgba(16,185,129,.4); }
+    .step-num { font-size:.65rem; font-weight:700; color:var(--green);
+      text-transform:uppercase; letter-spacing:.05em; }
+    .step-title { font-size:.8rem; font-weight:700; }
+    /* ── Charts ── */
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    .chart-card { background:var(--surface); border:1px solid var(--border);
+      border-radius:16px; padding:1.25rem; }
+    .chart-card h3 { font-size:.8rem; font-weight:700; text-transform:uppercase;
+      color:var(--text-muted); margin-bottom:1rem; }
+    .canvas-wrap { height:200px; position:relative; }
+    /* ── Tables ── */
+    .table-card { background:var(--surface); border:1px solid var(--border);
+      border-radius:16px; padding:1.25rem; }
+    .tab-row { display:flex; gap:.5rem; border-bottom:1px solid var(--border);
+      margin-bottom:1rem; }
+    .tab-btn { background:transparent; border:none; outline:none; padding:.6rem 1.2rem;
+      color:var(--text-muted); font-weight:700; font-size:.8rem; cursor:pointer;
+      border-bottom:2px solid transparent; transition:all .2s; }
+    .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .table-wrap { overflow-x:auto; max-height:340px; overflow-y:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    thead th { padding:.6rem .8rem; font-size:.68rem; font-weight:700;
+      color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;
+      border-bottom:1px solid var(--border); position:sticky; top:0;
+      background:var(--surface); }
+    tbody tr { border-bottom:1px solid rgba(255,255,255,.02); transition:background .15s; }
+    tbody tr:hover { background:rgba(59,130,246,.03); }
+    tbody td { padding:.6rem .8rem; }
+    .badge { display:inline-block; padding:.15rem .5rem; border-radius:999px;
+      font-size:.65rem; font-weight:700; text-transform:uppercase; }
+    .badge-pos { background:rgba(99,179,237,.1); color:#63b3ed; }
+    .badge-ecommerce { background:rgba(139,92,246,.1); color:#a78bfa; }
+    .badge-marketplace { background:rgba(245,158,11,.1); color:#fbbf24; }
+    /* ── S3 Buckets ── */
+    .s3-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .s3-bucket { background:rgba(255,255,255,.01); border:1px solid var(--border);
+      border-radius:12px; padding:1rem; }
+    .s3-bucket h4 { font-size:.75rem; font-weight:700; text-transform:uppercase;
+      margin-bottom:.75rem; display:flex; align-items:center; gap:.4rem; }
+    .s3-list { display:flex; flex-direction:column; gap:.35rem; max-height:180px;
+      overflow-y:auto; }
+    .s3-item { display:flex; justify-content:space-between; align-items:center;
+      padding:.4rem .6rem; background:rgba(255,255,255,.02); border-radius:6px;
+      font-size:.7rem; font-family:var(--font-mono); border:1px solid rgba(255,255,255,.03); }
+    .s3-key { color:#a3b3cc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      max-width:78%; }
+    .s3-size { color:var(--text-muted); flex-shrink:0; }
+    /* ── Terminal ── */
+    .terminal-card { background:#020612; border:1px solid var(--border);
+      border-radius:14px; padding:.9rem; }
+    .terminal-hdr { font-size:.72rem; font-weight:700; text-transform:uppercase;
+      color:var(--text-muted); margin-bottom:.6rem; }
+    .terminal-body { height:130px; overflow-y:auto; font-family:var(--font-mono);
+      font-size:.73rem; line-height:1.5; color:#a3b3cc; padding:.5rem;
+      border-radius:6px; background:rgba(0,0,0,.3); }
+    .t-ok { color:var(--green); }
+    .t-warn { color:var(--yellow); }
+    .t-err { color:var(--red); }
+    .t-info { color:#63b3ed; }
+  </style>
+</head>
+<body>
+
+<!-- ── Demo Toggle Banner ── -->
+<div class="demo-banner">
+  <div class="demo-banner-left">
+    <div class="demo-dot"></div>
+    <div>
+      <div class="demo-label">Static Demo Mode
+        <span>— Pre-loaded with real pipeline output. No Docker or Java required.</span>
+      </div>
+    </div>
+  </div>
+  <button class="demo-toggle-btn" onclick="goLive()">
+    ⚡ Switch to Live Pipeline →
+  </button>
+</div>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo-container">
+    <div class="logo-badge">RF</div>
+    <div class="logo-text">
+      <h1>Retail<span>Flow</span></h1>
+      <p>Local S3 Data Lake → Postgres Warehouse Pipeline</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="demo-chip">📸 Static Demo</span>
+    <!-- 
+      These badges show the state from a real completed pipeline run.
+      They are NOT live — this is a static snapshot. Open the live dashboard
+      at http://localhost:5050 to see real infrastructure status.
+    -->
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="health-bar">
+      <div class="demo-chip" style="
+        background:rgba(100,116,139,.08);border-color:rgba(100,116,139,.25);
+        color:#94a3b8;font-size:.68rem;letter-spacing:.03em;">
+        📸 Snapshot from completed run · 2026-07-01
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="main-wrap">
+
+  <!-- ── Pipeline Completion Status ── -->
+  <div class="pipeline-bar">
+    <div class="pipeline-bar-hdr">
+      <div class="pipeline-bar-title">⛓️ ETL Pipeline Status — Last Run: 2026-07-01</div>
+      <div class="pipeline-complete-chip">✓ Completed Successfully</div>
+    </div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-badge">🚀</div>
+        <div><div class="step-num">Step 1</div><div class="step-title">Bootstrap</div></div>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">📥</div>
+        <div><div class="step-num">Step 2</div><div class="step-title">Ingestion</div></div>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">🛡️</div>
+        <div><div class="step-num">Step 3</div><div class="step-title">Validation</div></div>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">⚡</div>
+        <div><div class="step-num">Step 4</div><div class="step-title">PySpark</div></div>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">🗄️</div>
+        <div><div class="step-num">Step 5</div><div class="step-title">Warehouse</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KPI Row ── -->
+  <div class="kpi-grid">
+    <div class="kpi-box" style="--kpi-color:var(--accent)">
+      <div class="kpi-lbl">Total Revenue</div>
+      <div class="kpi-val">₹ 645.42</div>
+    </div>
+    <div class="kpi-box" style="--kpi-color:#8b5cf6">
+      <div class="kpi-lbl">Total Orders</div>
+      <div class="kpi-val">11</div>
+    </div>
+    <div class="kpi-box" style="--kpi-color:#06b6d4">
+      <div class="kpi-lbl">Units Sold</div>
+      <div class="kpi-val">23</div>
+    </div>
+    <div class="kpi-box" style="--kpi-color:var(--green)">
+      <div class="kpi-lbl">Customers</div>
+      <div class="kpi-val">9</div>
+    </div>
+    <div class="kpi-box" style="--kpi-color:var(--yellow)">
+      <div class="kpi-lbl">Products</div>
+      <div class="kpi-val">7</div>
+    </div>
+    <div class="kpi-box" style="--kpi-color:var(--red)">
+      <div class="kpi-lbl">Avg Order Value</div>
+      <div class="kpi-val">₹ 58.67</div>
+    </div>
+  </div>
+
+  <!-- ── Charts ── -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>📊 Revenue by Channel</h3>
+      <div class="canvas-wrap"><canvas id="channelChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🏆 Top Products by Revenue</h3>
+      <div class="canvas-wrap"><canvas id="skuChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Data Tables ── -->
+  <div class="table-card">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('orders', this)">Orders (fact_orders)</button>
+      <button class="tab-btn" onclick="switchTab('customers', this)">Customers (dim_customer)</button>
+      <button class="tab-btn" onclick="switchTab('s3', this)">Local S3 Data Lake</button>
+      <button class="tab-btn" onclick="switchTab('quarantine', this)">Quarantine Zone (3 Bad Records)</button>
+    </div>
+
+    <!-- Orders -->
+    <div id="tab-orders" class="tab-content">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Order ID</th><th>Customer</th><th>SKU</th><th>Channel</th>
+            <th>Date</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th>Order Total</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1001</td><td>CUST-001</td><td style="font-weight:700">PROD-101</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>2</td><td>₹ 15.50</td><td style="font-weight:700;color:#a78bfa">₹ 31.00</td><td style="font-weight:700;color:var(--green)">₹ 31.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1002</td><td>CUST-002</td><td style="font-weight:700">PROD-102</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 8.99</td><td style="font-weight:700;color:#a78bfa">₹ 8.99</td><td style="font-weight:700;color:var(--green)">₹ 8.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1003</td><td>CUST-003</td><td style="font-weight:700">PROD-101</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>5</td><td>₹ 15.50</td><td style="font-weight:700;color:#a78bfa">₹ 77.50</td><td style="font-weight:700;color:var(--green)">₹ 77.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1004</td><td>CUST-001</td><td style="font-weight:700">PROD-103</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 45.00</td><td style="font-weight:700;color:#a78bfa">₹ 45.00</td><td style="font-weight:700;color:var(--green)">₹ 45.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1009</td><td>CUST-002</td><td style="font-weight:700">PROD-103</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 45.00</td><td style="font-weight:700;color:#a78bfa">₹ 45.00</td><td style="font-weight:700;color:var(--green)">₹ 45.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">POS-1010</td><td>CUST-008</td><td style="font-weight:700">PROD-102</td><td><span class="badge badge-pos">pos</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>4</td><td>₹ 8.99</td><td style="font-weight:700;color:#a78bfa">₹ 35.96</td><td style="font-weight:700;color:var(--green)">₹ 35.96</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">ECOMM-2001</td><td>CUST-101</td><td style="font-weight:700">PROD-201</td><td><span class="badge badge-ecommerce">ecommerce</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 120.00</td><td style="font-weight:700;color:#a78bfa">₹ 120.00</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">ECOMM-2002</td><td>CUST-102</td><td style="font-weight:700">PROD-202</td><td><span class="badge badge-ecommerce">ecommerce</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>2</td><td>₹ 19.99</td><td style="font-weight:700;color:#a78bfa">₹ 39.98</td><td style="font-weight:700;color:var(--green)">₹ 39.98</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">ECOMM-2003</td><td>CUST-103</td><td style="font-weight:700">PROD-203</td><td><span class="badge badge-ecommerce">ecommerce</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 59.50</td><td style="font-weight:700;color:#a78bfa">₹ 59.50</td><td style="font-weight:700;color:var(--green)">₹ 59.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">ECOMM-2007</td><td>CUST-106</td><td style="font-weight:700">PROD-204</td><td><span class="badge badge-marketplace">marketplace</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 9.99</td><td style="font-weight:700;color:#a78bfa">₹ 9.99</td><td style="font-weight:700;color:var(--green)">₹ 9.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">ECOMM-2008</td><td>CUST-107</td><td style="font-weight:700">PROD-201</td><td><span class="badge badge-ecommerce">ecommerce</span></td><td style="color:var(--text-muted)">2026-07-01</td><td>1</td><td>₹ 120.00</td><td style="font-weight:700;color:#a78bfa">₹ 120.00</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Customers -->
+    <div id="tab-customers" class="tab-content" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Customer ID</th><th>Name</th><th>Email</th><th>Orders</th><th>Lifetime Value</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-001</td><td style="font-weight:600">Alice Sharma</td><td style="color:var(--text-muted)">alice.sharma@example.com</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 76.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-002</td><td style="font-weight:600">Ravi Menon</td><td style="color:var(--text-muted)">ravi.menon@example.com</td><td>2</td><td style="font-weight:700;color:var(--green)">₹ 53.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-003</td><td style="font-weight:600">Priya Nair</td><td style="color:var(--text-muted)">priya.nair@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 77.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-008</td><td style="font-weight:600">Kiran Desai</td><td style="color:var(--text-muted)">kiran.desai@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 35.96</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-101</td><td style="font-weight:600">John Doe</td><td style="color:var(--text-muted)">john.doe@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-102</td><td style="font-weight:600">Jane Smith</td><td style="color:var(--text-muted)">jane.smith@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 39.98</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-103</td><td style="font-weight:600">Bob Johnson</td><td style="color:var(--text-muted)">bob.johnson@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 59.50</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-106</td><td style="font-weight:600">Sara Khan</td><td style="color:var(--text-muted)">sara.khan@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 9.99</td></tr>
+            <tr><td style="font-family:var(--font-mono);color:#63b3ed">CUST-107</td><td style="font-weight:600">Mike Lee</td><td style="color:var(--text-muted)">mike.lee@example.com</td><td>1</td><td style="font-weight:700;color:var(--green)">₹ 120.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S3 Buckets -->
+    <div id="tab-s3" class="tab-content" style="display:none">
+      <div class="s3-grid">
+        <div class="s3-bucket">
+          <h4 style="color:#63b3ed">🟦 Raw Bronze Zone</h4>
+          <div class="s3-list">
+            <div class="s3-item"><span class="s3-key">raw/orders/2026-07-01/pos_export_2026-07-01.csv</span><span class="s3-size">612 B</span></div>
+            <div class="s3-item"><span class="s3-key">raw/orders/2026-07-01/ecommerce_export_2026-07-01.json</span><span class="s3-size">1.1 KB</span></div>
+            <div class="s3-item"><span class="s3-key">validated/orders/2026-07-01/valid_orders.csv</span><span class="s3-size">847 B</span></div>
+          </div>
+        </div>
+        <div class="s3-bucket">
+          <h4 style="color:#fbbf24">🟡 Curated Gold Zone (Parquet)</h4>
+          <div class="s3-list">
+            <div class="s3-item"><span class="s3-key">curated/orders/processed_date=2026-07-01/part-00000.parquet</span><span class="s3-size">9.2 KB</span></div>
+          </div>
+        </div>
+        <div class="s3-bucket">
+          <h4 style="color:#f87171">🔴 Quarantine Zone (Bad Records)</h4>
+          <div class="s3-list">
+            <div class="s3-item"><span class="s3-key">quarantine/orders/2026-07-01/quarantined_orders.jsonl</span><span class="s3-size">1.4 KB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quarantine Detail -->
+    <div id="tab-quarantine" class="tab-content" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Record ID</th><th>Source</th><th>Failure Reason</th><th>Bad Field</th><th>Raw Value</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">POS-1005</td>
+              <td><span class="badge badge-pos">pos</span></td>
+              <td style="color:var(--red)">Missing required field</td>
+              <td style="font-family:var(--font-mono)">order_date</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">""</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">POS-1006</td>
+              <td><span class="badge badge-pos">pos</span></td>
+              <td style="color:var(--red)">Value must be positive</td>
+              <td style="font-family:var(--font-mono)">quantity</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">-3</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">POS-1007</td>
+              <td><span class="badge badge-pos">pos</span></td>
+              <td style="color:var(--red)">Value must be greater than 0</td>
+              <td style="font-family:var(--font-mono)">unit_price</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">-5.00</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">POS-1008</td>
+              <td><span class="badge badge-pos">pos</span></td>
+              <td style="color:var(--red)">Enum value not valid</td>
+              <td style="font-family:var(--font-mono)">channel</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">"invalid_channel"</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">ECOMM-2004</td>
+              <td><span class="badge badge-ecommerce">ecommerce</span></td>
+              <td style="color:var(--red)">Value must be positive</td>
+              <td style="font-family:var(--font-mono)">quantity</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">0</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">ECOMM-2005</td>
+              <td><span class="badge badge-ecommerce">ecommerce</span></td>
+              <td style="color:var(--red)">Value must be greater than 0</td>
+              <td style="font-family:var(--font-mono)">unit_price</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">-1.99</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:#f87171">ECOMM-2006</td>
+              <td><span class="badge badge-ecommerce">ecommerce</span></td>
+              <td style="color:var(--red)">Missing required field</td>
+              <td style="font-family:var(--font-mono)">customer_id</td>
+              <td style="color:var(--text-muted);font-family:var(--font-mono)">""</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pipeline Execution Terminal (pre-filled) ── -->
+  <div class="terminal-card">
+    <div class="terminal-hdr">🐚 Pipeline Execution Log — Run: 2026-07-01</div>
+    <div class="terminal-body">
+      <div class="t-info">[10:52:01] === RetailFlow Pipeline starting for 2026-07-01 ===</div>
+      <div>[10:52:02] Checking if Docker daemon is running...</div>
+      <div class="t-ok">[10:52:02] Docker daemon is running and responsive.</div>
+      <div>[10:52:03] Starting Docker containers (LocalStack S3 + PostgreSQL)...</div>
+      <div class="t-ok">[10:52:08] LocalStack S3 is ready!</div>
+      <div class="t-ok">[10:52:11] PostgreSQL is ready and accepting connections!</div>
+      <div>[10:52:12] Provisioning S3 buckets via Terraform...</div>
+      <div class="t-ok">[10:52:14] terraform: Apply complete! Resources: 2 added.</div>
+      <div>[10:52:14] Applying warehouse schema (dim_customer, dim_product, dim_date, fact_orders)...</div>
+      <div class="t-ok">[10:52:14] Database schema applied successfully!</div>
+      <div class="t-info">[10:52:15] [Step 1/4] Ingesting raw POS & E-commerce exports...</div>
+      <div class="t-ok">[10:52:15] Successfully uploaded pos_export_2026-07-01.csv → s3://retailflow-raw/raw/</div>
+      <div class="t-ok">[10:52:16] Successfully uploaded ecommerce_export_2026-07-01.json → s3://retailflow-raw/raw/</div>
+      <div class="t-info">[10:52:16] [Step 2/4] Validating records and routing to quarantine...</div>
+      <div>[10:52:16] Processing: raw/orders/2026-07-01/pos_export_2026-07-01.csv</div>
+      <div>[10:52:17] Processing: raw/orders/2026-07-01/ecommerce_export_2026-07-01.json</div>
+      <div class="t-warn">[10:52:17] Quarantined 7 bad records → s3://retailflow-raw/quarantine/orders/2026-07-01/</div>
+      <div class="t-ok">[10:52:17] Saved 11 valid records → s3://retailflow-raw/validated/orders/2026-07-01/</div>
+      <div class="t-info">[10:52:18] [Step 3/4] Running PySpark transformation...</div>
+      <div>[10:52:18] Initializing PySpark with S3 endpoint: http://localhost:4566</div>
+      <div>[10:52:38] Reading validated data from: s3a://retailflow-raw/validated/orders/2026-07-01/</div>
+      <div>[10:52:40] Deduplicating, computing line_total, order_total_amount, order_item_count...</div>
+      <div class="t-ok">[10:52:43] Curated Parquet written → s3a://retailflow-curated/curated/orders/processed_date=2026-07-01</div>
+      <div class="t-info">[10:52:43] [Step 4/4] Loading curated Parquet to PostgreSQL database...</div>
+      <div class="t-ok">[10:52:44] Inserted 9 new customers → dim_customer</div>
+      <div class="t-ok">[10:52:44] Inserted 7 new products  → dim_product</div>
+      <div class="t-ok">[10:52:44] Inserted 1 new date      → dim_date</div>
+      <div class="t-ok">[10:52:44] Loaded 11 fact records   → fact_orders</div>
+      <div class="t-ok" style="font-weight:700;font-size:.8rem">[10:52:44] === Pipeline run completed successfully for 2026-07-01! ===</div>
+    </div>
+  </div>
+
+</div><!-- end main-wrap -->
+
+<script>
+// ── Chart Data ──────────────────────────────────────────────────────────────
+const channelData = {
+  labels: ["ECOMMERCE", "POS", "MARKETPLACE"],
+  datasets: [{
+    data: [339.48, 297.45, 9.99],
+    backgroundColor: ["rgba(139,92,246,.75)", "rgba(59,130,246,.75)", "rgba(245,158,11,.75)"],
+    borderColor: ["#8b5cf6", "#3b82f6", "#f59e0b"],
+    borderWidth: 1.5
+  }]
+};
+
+const skuData = {
+  labels: ["PROD-201", "PROD-101", "PROD-103", "PROD-203", "PROD-202", "PROD-102", "PROD-204"],
+  datasets: [{
+    data: [240.00, 108.50, 90.00, 59.50, 48.97, 44.95, 9.99],
+    backgroundColor: "rgba(59,130,246,.65)",
+    borderColor: "#3b82f6", borderWidth: 1, borderRadius: 4
+  }]
+};
+
+const chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+};
+
+new Chart(document.getElementById("channelChart"), {
+  type: "doughnut",
+  data: channelData,
+  options: {
+    ...chartDefaults,
+    plugins: {
+      legend: { position: "right", labels: { color: "#94a3b8", font: { size: 10 } } },
+      tooltip: { callbacks: { label: (ctx) => " ₹ " + ctx.raw.toFixed(2) } }
+    }
+  }
+});
+
+new Chart(document.getElementById("skuChart"), {
+  type: "bar",
+  data: skuData,
+  options: {
+    ...chartDefaults,
+    indexAxis: "y",
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: "rgba(255,255,255,.03)" }, ticks: { color: "#64748b", font: { size: 9 } } },
+      y: { grid: { display: false }, ticks: { color: "#a3b3cc", font: { size: 10 } } }
+    }
+  }
+});
+
+// ── Tab Switcher ────────────────────────────────────────────────────────────
+function switchTab(tabId, btn) {
+  document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + tabId).style.display = "block";
+  btn.classList.add("active");
+}
+
+// ── Toggle to Live Dashboard ─────────────────────────────────────────────────
+// If already served by Flask (http://), navigate to / on the same origin.
+// If opened as a local file (file://), prompt to start the server then open localhost:5050.
+function goLive() {
+  if (window.location.protocol !== 'file:') {
+    // Already on the Flask server — just go to the live dashboard root
+    window.location.href = '/';
+    return;
+  }
+  // Opened as a local file — server may not be running
+  const confirmed = confirm(
+    "To use the live dashboard you need:\n\n" +
+    "  1. Docker Desktop running\n" +
+    "  2. Run:  python dashboard/server.py\n\n" +
+    "Once the server is running, click OK to open http://localhost:5050"
+  );
+  if (confirmed) {
+    window.open("http://localhost:5050", "_blank");
+  }
+}
+</script>
+</body>
+</html>
