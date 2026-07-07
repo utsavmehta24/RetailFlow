@@ -151,26 +151,6 @@ This pipeline implements **production-grade data engineering patterns**:
 
 ---
 
-## Dashboard Preview
-
-<!-- SCREENSHOT: Pipeline step cards in "running" state -->
-<!-- Suggested filename: images/pipeline_steps.png -->
-<!-- Capture while pipeline is running to show the animated step cards -->
-> **Screenshot placeholder** — run the live pipeline at `http://localhost:5050` and screenshot the step cards while running.
-> Replace this block with: `![Pipeline Steps](images/pipeline_steps.png)`
-
-<!-- SCREENSHOT: KPI metrics and charts after a completed run -->
-<!-- Suggested filename: images/kpi_charts.png -->
-> **Screenshot placeholder** — after a completed run, screenshot the KPI row + channel/SKU charts.
-> Replace this block with: `![KPI Charts](images/kpi_charts.png)`
-
-<!-- SCREENSHOT: fact_orders table tab -->
-<!-- Suggested filename: images/orders_table.png -->
-> **Screenshot placeholder** — screenshot the Orders (fact_orders) tab.
-> Replace this block with: `![Orders Table](images/orders_table.png)`
-
----
-
 ## 🛠️ Tech Stack
 
 | Layer | Technology | Local | Production AWS | Why This Choice |
