@@ -893,10 +893,11 @@ Special thanks to the data engineering community for sharing knowledge and best 
 
 ## 📞 Support & Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/RetailFlow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/RetailFlow/discussions)
+- **Issues**: [GitHub Issues](https://github.com/utsavmehta24/RetailFlow/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/utsavmehta24/RetailFlow/discussions)
 - **Email**: your.email@example.com
-- **Twitter**: [@yourhandle](https://twitter.com/yourhandle)
+- **Twitter**: [@Lucid24by7_io
+](https://x.com/Lucid24by7_io)
 
 ---
 
@@ -906,6 +907,6 @@ Special thanks to the data engineering community for sharing knowledge and best 
 
 Made with ❤️ for the Data Engineering community
 
-[Report Bug](https://github.com/yourusername/RetailFlow/issues) · [Request Feature](https://github.com/yourusername/RetailFlow/issues) · [View Demo](dashboard/static/demo.html)
+[Report Bug](https://github.com/utsavmehta24/RetailFlow/issues) · [Request Feature](https://github.com/utsavmehta24/RetailFlow/issues) · [View Demo](dashboard/static/demo.html)
 
 </div>
