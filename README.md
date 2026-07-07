@@ -15,6 +15,12 @@
 
 > **A production-grade end-to-end data engineering pipeline** that ingests multi-source retail transactions, validates with Pydantic v2, transforms using PySpark, orchestrates with a modern web dashboard, and loads into a PostgreSQL Star Schema — all running **locally at zero cloud cost**.
 
+<div align="center">
+
+![RetailFlow Dashboard](images/kpi_charts.png)
+
+</div>
+
 ---
 
 ## 📋 Table of Contents
@@ -93,6 +99,24 @@ The static demo shows:
 - 📋 Fact tables and dimension tables
 - 🗂️ S3 bucket structure visualization
 - ⚠️ Quarantine records with validation errors
+
+### 📸 Dashboard Preview
+
+<div align="center">
+
+#### Pipeline Execution Steps
+![Pipeline Steps](images/pipeline_steps.png)
+*Real-time pipeline status with live logs and progress tracking*
+
+#### KPI Analytics & Charts
+![KPI Charts](images/kpi_charts.png)
+*Revenue analytics, channel performance, and top-selling products*
+
+#### Data Tables
+![Orders Table](images/orders_table.png)
+*Fact tables with complete transaction details*
+
+</div>
 
 **Ready to run it yourself?** Continue to [Quick Start](#-quick-start).
 
