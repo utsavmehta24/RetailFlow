@@ -1,4 +1,4 @@
-# RetailFlow — Local Data Lake → Data Warehouse Pipeline
+﻿# RetailFlow — Local Data Lake → Data Warehouse Pipeline
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -373,5 +373,3 @@ SOFTWARE.
 ```
 
 See [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT) for the full license text.
-#   R e t a i l F l o w  
- 
